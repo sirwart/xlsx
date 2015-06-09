@@ -565,6 +565,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
 
+	sheet.HasDrawing = worksheet.Drawing != nil
+
 	result.Sheet = sheet
 	sc <- result
 }

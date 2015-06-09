@@ -21,6 +21,15 @@ type xlsxWorksheet struct {
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
 	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
 	HeaderFooter  xlsxHeaderFooter  `xml:"headerFooter"`
+	Drawing       *xlsxDrawing      `xml:"drawing,omitempty"`
+}
+
+// xlsxDrawing directly maps the drawing element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxDrawing struct {
+	R string `xml:"r,attr,omitempty"`
 }
 
 // xlsxHeaderFooter directly maps the headerFooter element in the namespace

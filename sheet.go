@@ -17,6 +17,7 @@ type Sheet struct {
 	Hidden      bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
+	HasDrawing  bool
 }
 
 type SheetView struct {
