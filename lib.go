@@ -46,9 +46,9 @@ func getRangeFromString(rangeString string) (lower int, upper int, error error) 
 	return lower, upper, error
 }
 
-// lettersToNumeric is used to convert a character based column
+// LettersToNumeric is used to convert a character based column
 // reference to a zero based numeric column identifier.
-func lettersToNumeric(letters string) int {
+func LettersToNumeric(letters string) int {
 	sum, mul, n := 0, 1, 0
 	for i := len(letters) - 1; i >= 0; i, mul, n = i-1, mul*26, 1 {
 		c := letters[i]
@@ -172,7 +172,7 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 		return x, y, error
 	}
 	y -= 1 // Zero based
-	x = lettersToNumeric(letterPart)
+	x = LettersToNumeric(letterPart)
 	return x, y, error
 }
 
