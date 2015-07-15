@@ -302,10 +302,6 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 }
 
 func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) (index int) {
-	// don't add built in NumFmt
-	if xNumFmt.NumFmtId <= builtinNumFmtsCount {
-		return -1
-	}
 	numFmt, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
 	if !ok {
 		if styles.numFmtRefTable == nil {
