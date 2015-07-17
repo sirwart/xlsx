@@ -57,6 +57,65 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
+var builtinColors = map[int]string {
+	0: "000000",
+	1: "FFFFFF",
+	2: "FF0000",
+	3: "00FF00",
+	4: "0000FF",
+	5: "FFFF00",
+	6: "FF00FF",
+	7: "00FFFF",
+	8: "800000",
+	9: "008000",
+	10: "000080",
+	11: "808000",
+	12: "800080",
+	13: "008080",
+	14: "C0C0C0",
+	15: "808080",
+	16: "9999FF",
+	17: "993366",
+	18: "FFFFCC",
+	19: "CCFFFF",
+	20: "660066",
+	21: "FF8080",
+	22: "0066CC",
+	23: "CCCCFF",
+	24: "000080",
+	25: "FF00FF",
+	26: "FFFF00",
+	27: "00FFFF",
+	28: "800080",
+	29: "800000",
+	30: "008080",
+	31: "0000FF",
+	32: "00CCFF",
+	33: "CCFFFF",
+	34: "CCFFCC",
+	35: "FFFF99",
+	36: "99CCFF",
+	37: "FF99CC",
+	38: "CC99FF",
+	39: "FFCC99",
+	40: "3366FF",
+	41: "33CCCC",
+	42: "99CC00",
+	43: "FFCC00",
+	44: "FF9900",
+	45: "FF6600",
+	46: "666699",
+	47: "969696",
+	48: "003366",
+	49: "339966",
+	50: "003300",
+	51: "333300",
+	52: "993300",
+	53: "993366",
+	54: "333399",
+	55: "333333",
+}
+
 // xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -171,6 +230,13 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 	if color.Theme != nil && styles.theme != nil {
 		return styles.theme.themeColor(int64(*color.Theme), color.Tint)
+	} else if color.Indexed != nil {
+		color := builtinColors[*color.Indexed - 8]
+		if color != "" {
+			return "FF" + color
+		} else {
+			return ""
+		}
 	} else {
 		return color.RGB
 	}
@@ -615,9 +681,10 @@ func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxColor struct {
-	RGB   string  `xml:"rgb,attr,omitempty"`
-	Theme *int    `xml:"theme,attr,omitempty"`
-	Tint  float64 `xml:"tint,attr,omitempty"`
+	RGB     string  `xml:"rgb,attr,omitempty"`
+	Theme   *int    `xml:"theme,attr,omitempty"`
+	Tint    float64 `xml:"tint,attr,omitempty"`
+	Indexed *int    `xml:"indexed,attr,omitempty"`
 }
 
 func (color *xlsxColor) Equals(other xlsxColor) bool {
