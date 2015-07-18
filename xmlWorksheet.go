@@ -234,6 +234,7 @@ type xlsxRow struct {
 	R      int     `xml:"r,attr"`
 	Spans  string  `xml:"spans,attr,omitempty"`
 	Hidden bool    `xml:"hidden,attr,omitempty"`
+	Ht     float32 `xml:"ht,attr,omitempty"`
 	C      []xlsxC `xml:"c"`
 }
 

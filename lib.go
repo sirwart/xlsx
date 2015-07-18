@@ -485,6 +485,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		}
 
 		row.Hidden = rawrow.Hidden
+		row.Height = rawrow.Ht
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
