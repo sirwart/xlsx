@@ -9,6 +9,7 @@ import (
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
 	Name        string
+	SheetId     string
 	File        *File
 	Rows        []*Row
 	Cols        []*Col

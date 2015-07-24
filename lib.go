@@ -393,7 +393,9 @@ func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]shar
 			cell.cellType = CellTypeBool
 		case "e": // Error
 			cell.Value = vval
-			cell.formula = formulaForCell(rawcell, sharedFormulas)
+			if rawcell.F != nil {
+				cell.formula = formulaForCell(rawcell, sharedFormulas)
+			}
 			cell.cellType = CellTypeError
 		default:
 			if rawcell.F == nil {
@@ -558,6 +560,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		return
 	}
 	sheet := new(Sheet)
+	sheet.SheetId = rsheet.SheetId
 	sheet.File = fi
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
