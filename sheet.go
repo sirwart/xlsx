@@ -22,7 +22,8 @@ type Sheet struct {
 }
 
 type SheetView struct {
-	Pane *Pane
+	ShowGridLines bool
+	Pane          *Pane
 }
 
 type Pane struct {

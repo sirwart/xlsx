@@ -130,7 +130,7 @@ type xlsxSheetViews struct {
 type xlsxSheetView struct {
 	WindowProtection        bool            `xml:"windowProtection,attr"`
 	ShowFormulas            bool            `xml:"showFormulas,attr"`
-	ShowGridLines           bool            `xml:"showGridLines,attr"`
+	ShowGridLines           *bool           `xml:"showGridLines,attr,omitempty"`
 	ShowRowColHeaders       bool            `xml:"showRowColHeaders,attr"`
 	ShowZeros               bool            `xml:"showZeros,attr"`
 	RightToLeft             bool            `xml:"rightToLeft,attr"`
@@ -285,7 +285,7 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 		RightToLeft:             false,
 		Selection:               make([]xlsxSelection, 1),
 		ShowFormulas:            false,
-		ShowGridLines:           true,
+		ShowGridLines:           nil,
 		ShowOutlineSymbols:      true,
 		ShowRowColHeaders:       true,
 		ShowZeros:               true,

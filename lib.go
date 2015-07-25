@@ -531,7 +531,10 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 	}
 	sheetViews := []SheetView{}
 	for _, xSheetView := range xSheetViews.SheetView {
-		sheetView := SheetView{}
+		sheetView := SheetView{ShowGridLines: true}
+		if xSheetView.ShowGridLines != nil {
+			sheetView.ShowGridLines = *xSheetView.ShowGridLines
+		}
 		if xSheetView.Pane != nil {
 			xlsxPane := xSheetView.Pane
 			pane := &Pane{}
