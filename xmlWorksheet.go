@@ -205,7 +205,7 @@ type xlsxCol struct {
 	Hidden    bool `xml:"hidden,attr"`
 	Max       int  `xml:"max,attr"`
 	Min       int  `xml:"min,attr"`
-	// Style     int     `xml:"style,attr"`
+	Style     int  `xml:"style,attr"`
 	Width float64 `xml:"width,attr"`
 }
 
@@ -235,6 +235,7 @@ type xlsxRow struct {
 	Spans  string  `xml:"spans,attr,omitempty"`
 	Hidden bool    `xml:"hidden,attr,omitempty"`
 	Ht     float32 `xml:"ht,attr,omitempty"`
+	S      int     `xml:"s,attr,omitempty"`
 	C      []xlsxC `xml:"c"`
 }
 

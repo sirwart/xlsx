@@ -449,6 +449,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		}
 	}
 
+	getStyle := func(styleIndex int) *Style {
+		if file.styles != nil {
+			return file.styles.getStyle(styleIndex)
+		} else {
+			return nil
+		}
+	}
+
 	// Columns can apply to a range, for convenience we expand the
 	// ranges out into individual column definitions.
 	for _, rawcol := range Worksheet.Cols.Col {
@@ -461,7 +469,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 				Min:    rawcol.Min,
 				Max:    rawcol.Max,
 				Hidden: rawcol.Hidden,
-				Width:  rawcol.Width}
+				Width:  rawcol.Width,
+				Style:  getStyle(rawcol.Style)}
 		}
 	}
 
@@ -488,6 +497,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 
 		row.Hidden = rawrow.Hidden
 		row.Height = rawrow.Ht
+		row.Style = getStyle(rawrow.S)
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {

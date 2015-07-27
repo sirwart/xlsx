@@ -4,6 +4,7 @@ type Row struct {
 	Cells  []*Cell
 	Hidden bool
 	Height float32
+	Style  *Style
 	Sheet  *Sheet
 }
 
