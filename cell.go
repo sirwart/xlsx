@@ -31,6 +31,7 @@ type Cell struct {
 	Hidden   bool
 	HMerge   int
 	VMerge   int
+	Href     string
 	cellType CellType
 }
 

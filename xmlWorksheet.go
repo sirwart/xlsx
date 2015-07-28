@@ -17,6 +17,7 @@ type xlsxWorksheet struct {
 	Cols          xlsxCols          `xml:"cols"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
+	Hyperlinks    *xlsxHyperlinks   `xml:"hyperlinks,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
 	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
@@ -247,6 +248,17 @@ type xlsxMergeCells struct {
 	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
+}
+
+type xlsxHyperlinks struct {
+	Links []xlsxHyperlink `xml:"hyperlink,omitempty"`
+}
+
+type xlsxHyperlink struct {
+	Ref      string `xml:"ref,attr"`
+	Location string `xml:"location,attr,omitempty"`
+	Display  string `xml:"display,attr,omitempty"`
+	Id       string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr,omitempty"`
 }
 
 // xlsxC directly maps the c element in the namespace
