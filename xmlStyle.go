@@ -217,9 +217,8 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 				style.Font.Underline = true
 			}
 		}
-		if xf.Alignment.Horizontal != "" {
-			style.Alignment.Horizontal = xf.Alignment.Horizontal
-		}
+		style.Alignment.Horizontal = xf.Alignment.Horizontal
+		style.Alignment.Vertical = xf.Alignment.Vertical
 		style.Alignment.WrapText = xf.Alignment.WrapText
 		styles.lock.Lock()
 		styles.styleCache[styleIndex] = style

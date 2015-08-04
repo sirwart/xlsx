@@ -112,6 +112,7 @@ func NewFont(size int, name string) *Font {
 
 type Alignment struct {
 	Horizontal string
+	Vertical   string
 	WrapText   bool
 }
 
