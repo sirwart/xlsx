@@ -18,6 +18,7 @@ type Sheet struct {
 	Hidden      bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
+	MergeCells  []MergeCell
 	HasDrawing  bool
 }
 
@@ -37,6 +38,10 @@ type Pane struct {
 type SheetFormat struct {
 	DefaultColWidth  float64
 	DefaultRowHeight float64
+}
+
+type MergeCell struct {
+	StartRef, EndRef string
 }
 
 // Add a new Row to a Sheet

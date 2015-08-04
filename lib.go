@@ -575,6 +575,19 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 	return sheetViews
 }
 
+func readMergeCells(xCells []xlsxMergeCell) (cells []MergeCell) {
+	for _, xCell := range xCells {
+		refs := strings.Split(xCell.Ref, ":")
+		if len(refs) != 2 {
+			continue
+		}
+
+		cell := MergeCell{refs[0], refs[1]}
+		cells = append(cells, cell)
+	}
+	return
+}
+
 // readSheetFromFile is the logic of converting a xlsxSheet struct
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
@@ -602,6 +615,10 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
+
+	if mergeCells := worksheet.MergeCells; mergeCells != nil {
+		sheet.MergeCells = readMergeCells(mergeCells.Cells)
+	}
 
 	sheet.HasDrawing = worksheet.Drawing != nil
 
