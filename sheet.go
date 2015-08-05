@@ -20,6 +20,7 @@ type Sheet struct {
 	SheetFormat SheetFormat
 	MergeCells  []MergeCell
 	HasDrawing  bool
+	Comments    []Comment
 }
 
 type SheetView struct {
@@ -42,6 +43,11 @@ type SheetFormat struct {
 
 type MergeCell struct {
 	StartRef, EndRef string
+}
+
+type Comment struct {
+	Ref  string
+	Text string
 }
 
 // Add a new Row to a Sheet
