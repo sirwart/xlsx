@@ -21,6 +21,7 @@ type Sheet struct {
 	MergeCells  []MergeCell
 	HasDrawing  bool
 	Comments    []Comment
+	Tables      []Table
 }
 
 type SheetView struct {
@@ -48,6 +49,20 @@ type MergeCell struct {
 type Comment struct {
 	Ref  string
 	Text string
+}
+
+type Table struct {
+	StartRef, EndRef string
+	TotalsRowCount   int
+	TableStyleInfo   TableStyleInfo
+}
+
+type TableStyleInfo struct {
+	Name string
+	ShowFirstCol   bool
+	ShowLastCol    bool
+	ShowRowStripes bool
+	ShowColStripes bool
 }
 
 // Add a new Row to a Sheet
