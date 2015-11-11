@@ -22,6 +22,7 @@ type Sheet struct {
 	HasDrawing  bool
 	Comments    []Comment
 	Tables      []Table
+	PivotTables []PivotTable
 }
 
 type SheetView struct {
@@ -61,6 +62,22 @@ type TableStyleInfo struct {
 	Name string
 	ShowFirstCol   bool
 	ShowLastCol    bool
+	ShowRowStripes bool
+	ShowColStripes bool
+}
+
+type PivotTable struct {
+	StartRef, EndRef    string
+	RowItems            []RowItem
+	PivotTableStyleInfo PivotTableStyleInfo
+}
+
+type RowItem struct {
+	Type string
+}
+
+type PivotTableStyleInfo struct {
+	Name           string
 	ShowRowStripes bool
 	ShowColStripes bool
 }

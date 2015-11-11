@@ -641,6 +641,14 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 					sheet.Tables = append(sheet.Tables, *table)
 				}
 			}
+		case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable":
+			filename := rel.Target[3:len(rel.Target)]
+			if pivotTableFile := tableFiles[filename]; pivotTableFile != nil {
+				pivotTable, err := readPivotTableFromFile(pivotTableFile)
+				if err == nil {
+					sheet.PivotTables = append(sheet.PivotTables, *pivotTable)
+				}
+			}
 		}
 	}
 
@@ -924,6 +932,37 @@ func readTableFromFile(file *zip.File) (*Table, error) {
 	return &table, nil
 }
 
+func readPivotTableFromFile(file *zip.File) (*PivotTable, error) {
+	rc, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	xPivotTable := xlsxPivotTableDefinition{}
+	err = xml.NewDecoder(rc).Decode(&xPivotTable)
+	if err != nil {
+		return nil, err
+	}
+
+	styleInfo := xPivotTable.PivotTableStyleInfo
+	pivotTableStyleInfo := PivotTableStyleInfo{styleInfo.Name, styleInfo.ShowRowStripes != 0,	styleInfo.ShowColStripes != 0}
+
+	refs := strings.Split(xPivotTable.Location.Ref, ":")
+	if len(refs) != 2 {
+		return nil, errors.New("Invalid table ref: "+xPivotTable.Location.Ref)
+	}
+
+	var rowItems []RowItem
+
+	for _, rowItem := range xPivotTable.RowItems.Items {
+		rowItems = append(rowItems, RowItem{rowItem.T})
+	}
+
+	pivotTable := PivotTable{refs[0], refs[1], rowItems, pivotTableStyleInfo}
+	return &pivotTable, nil
+}
+
 // ReadZip() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases
 // ReadZip is not used directly, but is called internally by OpenFile.
@@ -971,7 +1010,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		default:
 			if strings.HasPrefix(v.Name, "xl/comments") {
 				commentFiles[v.Name[3:len(v.Name)]] = v
-			} else if strings.HasPrefix(v.Name, "xl/tables") {
+			} else if strings.HasPrefix(v.Name, "xl/tables") || strings.HasPrefix(v.Name, "xl/pivotTables") {
 				tableFiles[v.Name[3:len(v.Name)]] = v
 			} else if len(v.Name) > 29 && v.Name[0:20] == "xl/worksheets/_rels/" {
 				worksheetRels[v.Name[20:len(v.Name)-9]] = v
