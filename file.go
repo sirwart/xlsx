@@ -275,3 +275,9 @@ func (file *File) ToSlice() (output [][][]string, err error) {
 	}
 	return output, nil
 }
+
+func (file *File) DefaultFont() *Font {
+	xlsxFont := file.styles.Fonts.Font[0]
+	size, _ := strconv.ParseInt(xlsxFont.Sz.Val, 10, 64)
+	return NewFont(int(size), xlsxFont.Name.Val)
+}
