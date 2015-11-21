@@ -167,6 +167,11 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 	style.Fill = Fill{}
 	style.Font = Font{}
 
+	lineForXlsxLine := func(l xlsxLine) Line {
+		color := styles.argbValue(l.Color)
+		return Line{l.Style, color}
+	}
+
 	xfCount := styles.CellXfs.Count
 	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
 		xf := styles.CellXfs.Xf[styleIndex]
@@ -186,10 +191,10 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 		if xf.BorderId > -1 && xf.BorderId < styles.Borders.Count {
 			var border xlsxBorder
 			border = styles.Borders.Border[xf.BorderId]
-			style.Border.Left = border.Left.Style
-			style.Border.Right = border.Right.Style
-			style.Border.Top = border.Top.Style
-			style.Border.Bottom = border.Bottom.Style
+			style.Border.Left = lineForXlsxLine(border.Left)
+			style.Border.Right = lineForXlsxLine(border.Right)
+			style.Border.Top = lineForXlsxLine(border.Top)
+			style.Border.Bottom = lineForXlsxLine(border.Bottom)
 		}
 
 		if xf.FillId > -1 && xf.FillId < styles.Fills.Count {
@@ -220,6 +225,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 		style.Alignment.Horizontal = xf.Alignment.Horizontal
 		style.Alignment.Vertical = xf.Alignment.Vertical
 		style.Alignment.WrapText = xf.Alignment.WrapText
+		style.Alignment.Indent = xf.Alignment.Indent
 		styles.lock.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.lock.Unlock()
@@ -771,7 +777,8 @@ func (border *xlsxBorder) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxLine struct {
-	Style string `xml:"style,attr,omitempty"`
+	Style string    `xml:"style,attr,omitempty"`
+	Color xlsxColor `xml:"color"`
 }
 
 func (line *xlsxLine) Equals(other xlsxLine) bool {

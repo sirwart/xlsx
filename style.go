@@ -55,10 +55,10 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xPatternFill.FgColor.RGB = style.Fill.FgColor
 	xPatternFill.BgColor.RGB = style.Fill.BgColor
 	xFill.PatternFill = xPatternFill
-	xBorder.Left = xlsxLine{Style: style.Border.Left}
-	xBorder.Right = xlsxLine{Style: style.Border.Right}
-	xBorder.Top = xlsxLine{Style: style.Border.Top}
-	xBorder.Bottom = xlsxLine{Style: style.Border.Bottom}
+	xBorder.Left = style.Border.Left.xlsxLine()
+	xBorder.Right = style.Border.Right.xlsxLine()
+	xBorder.Top = style.Border.Top.xlsxLine()
+	xBorder.Bottom = style.Border.Bottom.xlsxLine()
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
@@ -70,17 +70,26 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	return
 }
 
-// Border is a high level structure intended to provide user access to
+// Borders is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {
-	Left   string
-	Right  string
-	Top    string
-	Bottom string
+	Left   Line
+	Right  Line
+	Top    Line
+	Bottom Line
+}
+
+type Line struct {
+	Style string
+	Color string
+}
+
+func (l Line)xlsxLine() xlsxLine {
+	return xlsxLine{Style: l.Style}
 }
 
 func NewBorder(left, right, top, bottom string) *Border {
-	return &Border{Left: left, Right: right, Top: top, Bottom: bottom}
+	return &Border{Left: Line{Style: left}, Right: Line{Style: right}, Top: Line{Style: top}, Bottom: Line{Style: bottom}}
 }
 
 // Fill is a high level structure intended to provide user access to
@@ -114,6 +123,7 @@ type Alignment struct {
 	Horizontal string
 	Vertical   string
 	WrapText   bool
+	Indent     int
 }
 
 func DefaulFont() *Font {
