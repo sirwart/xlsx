@@ -993,6 +993,8 @@ func readDrawingsFromFile(file *zip.File, rels map[string]xlsxWorkbookRelation, 
 	var drawings []Drawing
 
 	for _, anchor := range wsDr.TwoCellAnchors {
+		var pic *Pic
+
 		if anchor.Pic != nil {
 			embed := anchor.Pic.BlipFill.Blip.Embed
 			if embed == "" {
@@ -1017,15 +1019,15 @@ func readDrawingsFromFile(file *zip.File, rels map[string]xlsxWorkbookRelation, 
 				href = hlinkRel.Target
 			}
 
-			pic := Pic{image, href}
-			from := Pos{anchor.From.Col, anchor.From.ColOff, anchor.From.Row, anchor.From.RowOff}
-			to := Pos{anchor.To.Col, anchor.To.ColOff, anchor.To.Row, anchor.To.RowOff}
-
 			xfrm := anchor.Pic.SpPr.Xfrm
-
-			drawing := Drawing{from, to, xfrm.Off.X, xfrm.Off.Y, xfrm.Ext.CX, xfrm.Ext.CY, pic}
-			drawings = append(drawings, drawing)
+			pic = &Pic{image, xfrm.Off.X, xfrm.Off.Y, xfrm.Ext.CX, xfrm.Ext.CY, href}
 		}
+
+		from := Pos{anchor.From.Col, anchor.From.ColOff, anchor.From.Row, anchor.From.RowOff}
+		to := Pos{anchor.To.Col, anchor.To.ColOff, anchor.To.Row, anchor.To.RowOff}
+
+		drawing := Drawing{from, to, pic}
+		drawings = append(drawings, drawing)
 	}
 
 	return drawings, nil

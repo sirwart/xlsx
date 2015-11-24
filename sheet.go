@@ -85,8 +85,7 @@ type PivotTableStyleInfo struct {
 
 type Drawing struct {
 	From, To     Pos
-	X, Y, CX, CY int
-	Pic          Pic
+	Pic          *Pic
 }
 
 type Pos struct {
@@ -94,8 +93,9 @@ type Pos struct {
 }
 
 type Pic struct {
-	Image []byte
-	Href  string
+	Image        []byte
+	X, Y, CX, CY int
+	Href         string
 }
 
 // Add a new Row to a Sheet
