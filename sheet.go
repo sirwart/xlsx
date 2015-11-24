@@ -23,6 +23,7 @@ type Sheet struct {
 	Comments    []Comment
 	Tables      []Table
 	PivotTables []PivotTable
+	Drawings    []Drawing
 }
 
 type SheetView struct {
@@ -80,6 +81,20 @@ type PivotTableStyleInfo struct {
 	Name           string
 	ShowRowStripes bool
 	ShowColStripes bool
+}
+
+type Drawing struct {
+	X, Y, CX, CY int
+	Pic  Pic
+}
+
+type Pos struct {
+	Col, ColOffset, Row, RowOffset int
+}
+
+type Pic struct {
+	Image []byte
+	Href  string
 }
 
 // Add a new Row to a Sheet

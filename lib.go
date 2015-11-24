@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"path"
 	"strconv"
 	"strings"
@@ -592,7 +593,7 @@ func readMergeCells(xCells []xlsxMergeCell) (cells []MergeCell) {
 // into a Sheet struct.  This work can be done in parallel and so
 // readWorksheetRelationsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, worksheetRels, commentFiles, tableFiles map[string]*zip.File) {
+func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, worksheetRels, relableFiles map[string]*zip.File) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap)
 	if err != nil {
@@ -623,30 +624,43 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.HasDrawing = worksheet.Drawing != nil
 
 	for _, rel := range rels {
-		switch rel.Type {
-		case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments":
-			filename := rel.Target[3:len(rel.Target)]
-			if commentFile := commentFiles[filename]; commentFile != nil {
-				comments, err := readCommentsFromCommentFile(commentFile)
+		filename := rel.Target[3:len(rel.Target)]
+		if file := relableFiles[filename]; file != nil {
+			switch rel.Type {
+			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments":
+				comments, err := readCommentsFromCommentFile(file)
 				if err == nil {
 					sheet.Comments = comments
 				}
-			}
-			break
-		case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table":
-			filename := rel.Target[3:len(rel.Target)]
-			if tableFile := tableFiles[filename]; tableFile != nil {
-				table, err := readTableFromFile(tableFile)
+			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table":
+				table, err := readTableFromFile(file)
 				if err == nil {
 					sheet.Tables = append(sheet.Tables, *table)
 				}
-			}
-		case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable":
-			filename := rel.Target[3:len(rel.Target)]
-			if pivotTableFile := tableFiles[filename]; pivotTableFile != nil {
-				pivotTable, err := readPivotTableFromFile(pivotTableFile)
+			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable":
+				pivotTable, err := readPivotTableFromFile(file)
 				if err == nil {
 					sheet.PivotTables = append(sheet.PivotTables, *pivotTable)
+				}
+			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing":
+				components := strings.Split(filename, "/")
+				lastComponent := components[len(components)-1]
+				lastComponent += ".rels"
+				components[len(components)-1] = "_rels"
+				components = append(components, lastComponent)
+				relsFilename := strings.Join(components, "/")
+				relsFile := relableFiles[relsFilename]
+				if relsFile == nil {
+					continue
+				}
+				rels, err := readWorksheetRelationsFromZipFile(relsFile)
+				if err != nil {
+					continue
+				}
+
+				drawings, err := readDrawingsFromFile(file, rels, relableFiles)
+				if err == nil {
+					sheet.Drawings = drawings
 				}
 			}
 		}
@@ -659,7 +673,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, worksheetRels, commentFiles, tableFiles map[string]*zip.File) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, worksheetRels, relableFiles map[string]*zip.File) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var err error
 	var rc io.ReadCloser
@@ -701,7 +715,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		}()
 		err = nil
 		for i, rawsheet := range workbookSheets {
-			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, worksheetRels, commentFiles, tableFiles)
+			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, worksheetRels, relableFiles)
 		}
 	}()
 
@@ -963,6 +977,51 @@ func readPivotTableFromFile(file *zip.File) (*PivotTable, error) {
 	return &pivotTable, nil
 }
 
+func readDrawingsFromFile(file *zip.File, rels map[string]xlsxWorkbookRelation, relableFiles map[string]*zip.File) ([]Drawing, error) {
+	rc, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	wsDr := xlsxWsDr{}
+	err = xml.NewDecoder(rc).Decode(&wsDr)
+	if err != nil {
+		return nil, err
+	}
+
+	var drawings []Drawing
+
+	for _, anchor := range wsDr.TwoCellAnchors {
+		if anchor.Pic != nil {
+			embed := anchor.Pic.BlipFill.Blip.Embed
+			if embed == "" {
+				continue
+			}
+			picRel := rels[embed]
+			imageFilename := picRel.Target[3:len(picRel.Target)]
+			imageFile := relableFiles[imageFilename]
+			imageReader, err := imageFile.Open()
+			if err != nil {
+				continue
+			}
+			defer imageReader.Close()
+			image, err := ioutil.ReadAll(imageReader)
+			if err != nil {
+				continue
+			}
+			pic := Pic{Image: image}
+
+			xfrm := anchor.Pic.SpPr.Xfrm
+
+			drawing := Drawing{xfrm.Off.X, xfrm.Off.Y, xfrm.Ext.CX, xfrm.Ext.CY, pic}
+			drawings = append(drawings, drawing)
+		}
+	}
+
+	return drawings, nil
+}
+
 // ReadZip() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases
 // ReadZip is not used directly, but is called internally by OpenFile.
@@ -993,8 +1052,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	// file.numFmtRefTable = make(map[int]xlsxNumFmt, 1)
 	worksheets = make(map[string]*zip.File, len(r.File))
 	worksheetRels := map[string]*zip.File{}
-	commentFiles := map[string]*zip.File{}
-	tableFiles := map[string]*zip.File{}
+	relableFiles := map[string]*zip.File{}
 	for _, v = range r.File {
 		switch v.Name {
 		case "xl/sharedStrings.xml":
@@ -1008,10 +1066,10 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		case "xl/theme/theme1.xml":
 			themeFile = v
 		default:
-			if strings.HasPrefix(v.Name, "xl/comments") {
-				commentFiles[v.Name[3:len(v.Name)]] = v
-			} else if strings.HasPrefix(v.Name, "xl/tables") || strings.HasPrefix(v.Name, "xl/pivotTables") {
-				tableFiles[v.Name[3:len(v.Name)]] = v
+			if strings.HasPrefix(v.Name, "xl/comments") || strings.HasPrefix(v.Name, "xl/tables") ||
+			   strings.HasPrefix(v.Name, "xl/pivotTables") || strings.HasPrefix(v.Name, "xl/drawings") ||
+			   strings.HasPrefix(v.Name, "xl/media") {
+				relableFiles[v.Name[3:len(v.Name)]] = v
 			} else if len(v.Name) > 29 && v.Name[0:20] == "xl/worksheets/_rels/" {
 				worksheetRels[v.Name[20:len(v.Name)-9]] = v
 			} else if len(v.Name) > 14 {
@@ -1047,7 +1105,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 
 		file.styles = style
 	}
-	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, worksheetRels, commentFiles, tableFiles)
+	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, worksheetRels, relableFiles)
 	if err != nil {
 		return nil, err
 	}
