@@ -1010,11 +1010,20 @@ func readDrawingsFromFile(file *zip.File, rels map[string]xlsxWorkbookRelation, 
 			if err != nil {
 				continue
 			}
-			pic := Pic{Image: image}
+
+			href := ""
+			if hlinkRid := anchor.Pic.NvPicPr.CNvPr.HlinkClick.Id; hlinkRid != "" {
+				hlinkRel := rels[hlinkRid]
+				href = hlinkRel.Target
+			}
+
+			pic := Pic{image, href}
+			from := Pos{anchor.From.Col, anchor.From.ColOff, anchor.From.Row, anchor.From.RowOff}
+			to := Pos{anchor.To.Col, anchor.To.ColOff, anchor.To.Row, anchor.To.RowOff}
 
 			xfrm := anchor.Pic.SpPr.Xfrm
 
-			drawing := Drawing{xfrm.Off.X, xfrm.Off.Y, xfrm.Ext.CX, xfrm.Ext.CY, pic}
+			drawing := Drawing{from, to, xfrm.Off.X, xfrm.Off.Y, xfrm.Ext.CX, xfrm.Ext.CY, pic}
 			drawings = append(drawings, drawing)
 		}
 	}

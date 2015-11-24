@@ -31,6 +31,11 @@ type xlsxCNvPr struct {
 	Id    int    `xml:"id,attr"`
 	Name  string `xml:"name,attr"`
 	Descr string `xml:"descr,attr"`
+	HlinkClick xlsxHlinkClick `xml:"hlinkClick"`
+}
+
+type xlsxHlinkClick struct {
+	Id string `xml:"id,attr"`
 }
 
 type xlsxBlipFill struct {

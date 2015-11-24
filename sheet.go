@@ -84,12 +84,13 @@ type PivotTableStyleInfo struct {
 }
 
 type Drawing struct {
+	From, To     Pos
 	X, Y, CX, CY int
-	Pic  Pic
+	Pic          Pic
 }
 
 type Pos struct {
-	Col, ColOffset, Row, RowOffset int
+	Col, ColOff, Row, RowOff int
 }
 
 type Pic struct {
