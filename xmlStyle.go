@@ -129,6 +129,7 @@ type xlsxStyleSheet struct {
 	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
+	Colors       xlsxColors       `xml:"colors,omitempty"`
 
 	theme          *theme
 	styleCache     map[int]*Style
@@ -237,7 +238,12 @@ func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 	if color.Theme != nil && styles.theme != nil {
 		return styles.theme.themeColor(int64(*color.Theme), color.Tint)
 	} else if color.Indexed != nil {
-		color := builtinColors[*color.Indexed - 8]
+		index := *color.Indexed
+		if numIndexed := len(styles.Colors.IndexedColors.RgbColors); index < numIndexed {
+			// This means it references a custom palette color
+			return styles.Colors.IndexedColors.RgbColors[index].Rgb
+		}
+		color := builtinColors[index - 8]
 		if color != "" {
 			return "FF" + color
 		} else {
@@ -451,6 +457,18 @@ func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
 type xlsxNumFmts struct {
 	Count  int          `xml:"count,attr"`
 	NumFmt []xlsxNumFmt `xml:"numFmt,omitempty"`
+}
+
+type xlsxRgbColor struct {
+	Rgb string `xml:"rgb,attr"`
+}
+
+type xlsxColors struct {
+	IndexedColors xlsxIndexedColors `xml:"indexedColors,omitempty"`
+}
+
+type xlsxIndexedColors struct {
+	RgbColors []xlsxRgbColor `xml:"rgbColor"`
 }
 
 func (numFmts *xlsxNumFmts) Marshal() (result string, err error) {
