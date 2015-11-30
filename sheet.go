@@ -24,6 +24,7 @@ type Sheet struct {
 	Tables      []Table
 	PivotTables []PivotTable
 	Drawings    []Drawing
+	CfRules     []CfRule
 }
 
 type SheetView struct {
@@ -96,6 +97,20 @@ type Pic struct {
 	Image        []byte
 	X, Y, CX, CY int
 	Href         string
+}
+
+type CfRule struct {
+	Ref, Type, Operator string
+	Priority   int
+	StyleDiff  *StyleDiff
+	Formula    string
+	ColorScale []CfScaleColor
+}
+
+type CfScaleColor struct {
+	Type  string
+	Val   float64
+	Color string
 }
 
 // Add a new Row to a Sheet

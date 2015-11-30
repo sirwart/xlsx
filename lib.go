@@ -589,6 +589,33 @@ func readMergeCells(xCells []xlsxMergeCell) (cells []MergeCell) {
 	return
 }
 
+func cfRulesForConditionalFormatting(conditionalFormatting []xlsxConditionalFormatting, styles *xlsxStyleSheet) (cfRules []CfRule) {
+	for _, formatting := range conditionalFormatting {
+		for _, rule := range formatting.CfRules {
+			var styleDiff *StyleDiff
+			if rule.DxfId != nil {
+				styleDiff = styles.getStyleDiff(*rule.DxfId)
+			}
+			formula := ""
+			if rule.Formula != nil {
+				formula = rule.Formula.Content
+			}
+			var colorScale []CfScaleColor
+			if rule.ColorScale != nil {
+				if len(rule.ColorScale.Cfvos) != len(rule.ColorScale.Colors) {
+					continue
+				}
+				for i, cfvo := range rule.ColorScale.Cfvos {
+					color := rule.ColorScale.Colors[i]
+					colorScale = append(colorScale, CfScaleColor{cfvo.Type, cfvo.Val, styles.argbValue(color)})
+				}
+			}
+			cfRules = append(cfRules, CfRule{formatting.Sqref, rule.Type, rule.Operator, rule.Priority, styleDiff, formula, colorScale})
+		}
+	}
+	return
+}
+
 // readSheetFromFile is the logic of converting a xlsxSheet struct
 // into a Sheet struct.  This work can be done in parallel and so
 // readWorksheetRelationsFromZipFile will spawn an instance of this function per
@@ -619,6 +646,10 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 	if mergeCells := worksheet.MergeCells; mergeCells != nil {
 		sheet.MergeCells = readMergeCells(mergeCells.Cells)
+	}
+
+	if len(worksheet.ConditionalFormatting) > 0 {
+		sheet.CfRules = cfRulesForConditionalFormatting(worksheet.ConditionalFormatting, fi.styles)
 	}
 
 	sheet.HasDrawing = worksheet.Drawing != nil

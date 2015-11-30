@@ -23,6 +23,7 @@ type xlsxWorksheet struct {
 	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
 	HeaderFooter  xlsxHeaderFooter  `xml:"headerFooter"`
 	Drawing       *xlsxDrawing      `xml:"drawing,omitempty"`
+	ConditionalFormatting []xlsxConditionalFormatting `xml:"conditionalFormatting,omitempty"`
 }
 
 // xlsxDrawing directly maps the drawing element in the namespace
@@ -259,6 +260,34 @@ type xlsxHyperlink struct {
 	Location string `xml:"location,attr,omitempty"`
 	Display  string `xml:"display,attr,omitempty"`
 	Id       string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr,omitempty"`
+}
+
+type xlsxConditionalFormatting struct {
+	Sqref   string       `xml:"sqref,attr"`
+	CfRules []xlsxCfRule `xml:"cfRule"`
+}
+
+type xlsxCfRule struct {
+	Type     string `xml:"type,attr"`
+	DxfId    *int   `xml:"dxfId,attr"`
+	Priority int    `xml:"priority,attr"`
+	Operator string `xml:"operator,attr"`
+	Formula    *xlsxFormula `xml:"formula"`
+	ColorScale *xlsxColorScale `xml:"colorScale"`
+}
+
+type xlsxFormula struct {
+	Content string `xml:",chardata"`
+}
+
+type xlsxColorScale struct {
+	Cfvos  []xlsxCfvo  `xml:"cfvo"`
+	Colors []xlsxColor `xml:"color"`
+}
+
+type xlsxCfvo struct {
+	Type string  `xml:"type,attr"`
+	Val  float64 `xml:"val,attr"`
 }
 
 // xlsxC directly maps the c element in the namespace

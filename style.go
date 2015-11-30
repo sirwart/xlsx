@@ -70,6 +70,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	return
 }
 
+type StyleDiff struct {
+	Font Font
+	Fill Fill
+}
+
 // Borders is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {

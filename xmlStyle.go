@@ -130,6 +130,7 @@ type xlsxStyleSheet struct {
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 	Colors       xlsxColors       `xml:"colors,omitempty"`
+	Dxfs         xlsxDxfs         `xml:"dxfs,omitempty"`
 
 	theme          *theme
 	styleCache     map[int]*Style
@@ -207,21 +208,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 
 		if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
 			xfont := styles.Fonts.Font[xf.FontId]
-			style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
-			style.Font.Name = xfont.Name.Val
-			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
-			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
-			style.Font.Color = styles.argbValue(xfont.Color)
-
-			if bold := xfont.B; bold != nil && bold.Val != "0" {
-				style.Font.Bold = true
-			}
-			if italic := xfont.I; italic != nil && italic.Val != "0" {
-				style.Font.Italic = true
-			}
-			if underline := xfont.U; underline != nil && underline.Val != "0"  {
-				style.Font.Underline = true
-			}
+			style.Font = styles.fontForXFont(xfont)
 		}
 		style.Alignment.Horizontal = xf.Alignment.Horizontal
 		style.Alignment.Vertical = xf.Alignment.Vertical
@@ -232,6 +219,23 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 		styles.lock.Unlock()
 	}
 	return style
+}
+
+func (styles *xlsxStyleSheet) getStyleDiff(dxfId int) *StyleDiff {
+	dxf := styles.Dxfs.Dxf[dxfId]
+	styleDiff := &StyleDiff{}
+
+	if dxf.Font != nil {
+		styleDiff.Font = styles.fontForXFont(*dxf.Font)
+	}
+
+	if dxf.Fill != nil {
+		styleDiff.Fill.PatternType = dxf.Fill.PatternFill.PatternType
+		styleDiff.Fill.FgColor = styles.argbValue(dxf.Fill.PatternFill.FgColor)
+		styleDiff.Fill.BgColor = styles.argbValue(dxf.Fill.PatternFill.BgColor)
+	}
+
+	return styleDiff
 }
 
 func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
@@ -252,6 +256,25 @@ func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 	} else {
 		return color.RGB
 	}
+}
+
+func (styles *xlsxStyleSheet) fontForXFont(xfont xlsxFont) (font Font) {
+	font.Size, _ = strconv.Atoi(xfont.Sz.Val)
+	font.Name = xfont.Name.Val
+	font.Family, _ = strconv.Atoi(xfont.Family.Val)
+	font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
+	font.Color = styles.argbValue(xfont.Color)
+
+	if bold := xfont.B; bold != nil && bold.Val != "0" {
+		font.Bold = true
+	}
+	if italic := xfont.I; italic != nil && italic.Val != "0" {
+		font.Italic = true
+	}
+	if underline := xfont.U; underline != nil && underline.Val != "0"  {
+		font.Underline = true
+	}
+	return
 }
 
 // Excel styles can reference number formats that are built-in, all of which
@@ -469,6 +492,15 @@ type xlsxColors struct {
 
 type xlsxIndexedColors struct {
 	RgbColors []xlsxRgbColor `xml:"rgbColor"`
+}
+
+type xlsxDxfs struct {
+	Dxf []xlsxDxf `xml:"dxf"`
+}
+
+type xlsxDxf struct {
+	Font *xlsxFont `xml:"font"`
+	Fill *xlsxFill `xml:"fill"`
 }
 
 func (numFmts *xlsxNumFmts) Marshal() (result string, err error) {
