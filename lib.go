@@ -431,7 +431,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, rels map[string]xls
 		return nil, nil, 0, 0
 	}
 	reftable = file.referenceTable
-	if len(Worksheet.Dimension.Ref) > 0 {
+	if len(Worksheet.Dimension.Ref) > 0 && Worksheet.Dimension.Ref != "A1" {
+		// Socrata sets the dimension ref to A1 for some reason...
 		minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
 		minCol, minRow, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
