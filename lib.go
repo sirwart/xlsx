@@ -501,9 +501,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, rels map[string]xls
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			rows[insertRowIndex] = makeEmptyRow()
+			if len(rows) > insertRowIndex {
+				rows[insertRowIndex] = makeEmptyRow()
+			} else {
+				rows = append(rows, makeEmptyRow())
+			}
 			insertRowIndex++
 		}
+
 		// range is not empty and only one range exist
 		if len(rawrow.Spans) != 0 && strings.Count(rawrow.Spans, ":") == 1 {
 			row = makeRowFromSpan(rawrow.Spans)
@@ -540,6 +545,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, rels map[string]xls
 		}
 		if len(rows) > insertRowIndex {
 			rows[insertRowIndex] = row
+		} else {
+			rows = append(rows, row)
 		}
 		insertRowIndex++
 	}
@@ -967,11 +974,11 @@ func readTableFromFile(file *zip.File) (*Table, error) {
 
 	styleInfo := xTable.TableStyleInfo
 	tableStyleInfo := TableStyleInfo{styleInfo.Name, styleInfo.ShowFirstColumn != 0, styleInfo.ShowLastColumn != 0,
-									 styleInfo.ShowRowStripes != 0,	styleInfo.ShowColumnStripes != 0}
+		styleInfo.ShowRowStripes != 0, styleInfo.ShowColumnStripes != 0}
 
 	refs := strings.Split(xTable.Ref, ":")
 	if len(refs) != 2 {
-		return nil, errors.New("Invalid table ref: "+xTable.Ref)
+		return nil, errors.New("Invalid table ref: " + xTable.Ref)
 	}
 
 	table := Table{refs[0], refs[1], xTable.TotalsRowCount, tableStyleInfo}
@@ -992,11 +999,11 @@ func readPivotTableFromFile(file *zip.File) (*PivotTable, error) {
 	}
 
 	styleInfo := xPivotTable.PivotTableStyleInfo
-	pivotTableStyleInfo := PivotTableStyleInfo{styleInfo.Name, styleInfo.ShowRowStripes != 0,	styleInfo.ShowColStripes != 0}
+	pivotTableStyleInfo := PivotTableStyleInfo{styleInfo.Name, styleInfo.ShowRowStripes != 0, styleInfo.ShowColStripes != 0}
 
 	refs := strings.Split(xPivotTable.Location.Ref, ":")
 	if len(refs) != 2 {
-		return nil, errors.New("Invalid table ref: "+xPivotTable.Location.Ref)
+		return nil, errors.New("Invalid table ref: " + xPivotTable.Location.Ref)
 	}
 
 	var rowItems []RowItem
@@ -1110,8 +1117,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 			themeFile = v
 		default:
 			if strings.HasPrefix(v.Name, "xl/comments") || strings.HasPrefix(v.Name, "xl/tables") ||
-			   strings.HasPrefix(v.Name, "xl/pivotTables") || strings.HasPrefix(v.Name, "xl/drawings") ||
-			   strings.HasPrefix(v.Name, "xl/media") {
+				strings.HasPrefix(v.Name, "xl/pivotTables") || strings.HasPrefix(v.Name, "xl/drawings") ||
+				strings.HasPrefix(v.Name, "xl/media") {
 				relableFiles[v.Name[3:len(v.Name)]] = v
 			} else if len(v.Name) > 29 && v.Name[0:20] == "xl/worksheets/_rels/" {
 				worksheetRels[v.Name[20:len(v.Name)-9]] = v
